@@ -22,8 +22,10 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -58,29 +60,61 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.goji.yaml)")
 }
 
+// buildConfig iteractively creates a config file
+func buildConfig(pathName string, fileName string) {
+	fullPath := path.Join(pathName, fileName)
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Enter JIRA username: ")
+	username, _ := reader.ReadString('\n')
+
+	fmt.Print("Enter JIRA token: ")
+	token, _ := reader.ReadString('\n')
+
+	fmt.Print("Enter JIRA URL: ")
+	url, _ := reader.ReadString('\n')
+
+	f, err := os.Create(fullPath)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	f.WriteString("jira:\n")
+	f.WriteString("    username: " + username)
+	f.WriteString("    token: " + token)
+	f.WriteString("    url: " + url)
+	f.WriteString("    maxResults: 100")
+	f.Sync()
+
+}
+
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	configName := ".goji"
+
+	// Find home directory.
+	home, err := os.UserHomeDir()
 
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".goji" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".goji")
+		viper.SetConfigName(configName)
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Fprintln(os.Stderr, "Config file not found. Please run config command to create your configuration.")
-		os.Exit(1)
+		buildConfig(home, configName)
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Fprintln(os.Stderr, "Error in config file: ", err)
+		}
 	}
 
 	fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())

@@ -1,6 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2023 Gus de Souza
 */
 package cmd
 
@@ -51,5 +50,5 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 
 	// Command specific flags
-	listCmd.PersistentFlags().StringVarP(&filterVar, "filter", "f", "*", "Filter string for the query")
+	listCmd.PersistentFlags().StringVarP(&filterVar, "filter", "f", "", "Filter string for the query")
 }
