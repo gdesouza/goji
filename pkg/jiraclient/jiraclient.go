@@ -41,7 +41,21 @@ func Print(issues []jira.Issue) {
 		tbl.AppendRow([]interface{}{e.Key, e.Fields.Summary, e.Fields.Status.Name})
 	}
 	tbl.Render()
+}
 
+func PrintDetails(issue *jira.Issue) {
+	tbl := table.NewWriter()
+	tbl.SetOutputMirror(os.Stdout)
+	tbl.SetColumnConfigs([]table.ColumnConfig{
+		{
+			WidthMin: 100,
+			WidthMax: 100,
+		},
+	})
+	tbl.SetTitle(issue.Key)
+
+	tbl.AppendRow(table.Row(" "))
+	tbl.Render()
 }
 
 func Init(username string, token string, url string) {
@@ -57,6 +71,11 @@ func Init(username string, token string, url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetIssue(ticketId string) (*jira.Issue, error) {
+	issue, _, err := client.Issue.Get(ticketId, nil)
+	return issue, err
 }
 
 func GetPage(jql string, startAt int, maxResults int) ([]jira.Issue, error) {
